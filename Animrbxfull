@@ -66,7 +66,7 @@ local function reset(ch)
 	char = ch
 	hum = char:WaitForChild("Humanoid")
 	anim = Instance.new("Animation")
-	anim.AnimationId = "rbxassetid://81341516993901"
+	anim.AnimationId = "rbxassetid://855311580249868"
 	anim = hum:LoadAnimation(anim)
 	anim:AdjustSpeed(0.01)
 	anim.Priority = Enum.AnimationPriority.Action4
