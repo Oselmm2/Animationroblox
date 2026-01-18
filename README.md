@@ -1,135 +1,100 @@
---Free use, Don't report the animation id.
---https://scriptblox.com/script/Universal-Script-Zayas-Invisibility-Thing-FE-R15-Only-47898
+-- SERVICES
+local Players = game:GetService(&#34;Players&#34;)
+local player = Players.LocalPlayer
 
---getgenv().mobile = true -- to create a button for phones
+-- STATE
+local enabled = false
+local running = false
 
-local plr = game.Players.LocalPlayer
-local char = nil
-local hum = nil
-local anim = nil
-local isInvisible = false
-local isDead = true
-local ScriptRunning = true
-
-local invisSettings = {
-	HipHeight = 0.3
-}
-
-local defaultSettings = {
-	HipHeight = 2.11
-}
-
-local uis = game:GetService("UserInputService")
-
-local function startmsg()
-	local msg = [[
-        [Zaya's Invisibility Thing]
--–—————————————————————————————–−
-Press V to Toggle invisibility.
-Hold C to be invisible.
-Press F1 to quit this script.
-
-(Note: this message is not seen by other players, and this script only works in R15.)
--–—————————————————————————————–−
-    ]]
-	
-	local function AddColorToString(String:string, Color:Color3)
-		return "<font color='#"..Color:ToHex().."'>"..String.."</font>"
-	end
-	local function FontFace(String:string, FontId:Enum.Font)
-		return "<font face='".. FontId.Name .."'>".. String .."</font>"
-	end
-
-	msg = FontFace(msg, Enum.Font.Code)
-
-	game.TextChatService.TextChannels.RBXGeneral:DisplaySystemMessage(AddColorToString(msg, Color3.fromRGB(255, 201, 75)))
+-- CHARACTER
+local function getHRP()
+    return player.Character
+        and player.Character:WaitForChild(&#34;HumanoidRootPart&#34;)
 end
 
-local function byemsg()
-	local msg = [[
-Script stopped, Thanks for using Zaya's Invisibility Thing!
-    ]]
+-- FIND CLOSEST COIN
+local function getClosestCoin()
+    local hrp = getHRP()
+    if not hrp then return end
 
-	local function AddColorToString(String:string, Color:Color3)
-		return "<font color='#"..Color:ToHex().."'>"..String.."</font>"
-	end
-	local function FontFace(String:string, FontId:Enum.Font)
-		return "<font face='".. FontId.Name .."'>".. String .."</font>"
-	end
+    local closest, shortest = nil, math.huge
 
-	msg = FontFace(msg, Enum.Font.Code)
+    for _, model in ipairs(workspace.EventParts:GetChildren()) do
+        if model:IsA(&#34;Model&#34;) and model.Name == &#34;Radioactive Coin&#34; then
+            local part = model.PrimaryPart
+            if part then
+                local dist = (part.Position - hrp.Position).Magnitude
+                if dist &lt; shortest then
+                    shortest = dist
+                    closest = model
+                end
+            end
+        end
+    end
 
-	game.TextChatService.TextChannels.RBXGeneral:DisplaySystemMessage(AddColorToString(msg, Color3.fromRGB(255, 201, 75)))
+    return closest
 end
 
-local function reset(ch)
-	char = ch
-	hum = char:WaitForChild("Humanoid")
-	anim = Instance.new("Animation")
-	anim.AnimationId = "rbxassetid://85531580249868"
-	anim = hum:LoadAnimation(anim)
-	anim:AdjustSpeed(0.01)
-	anim.Priority = Enum.AnimationPriority.Action4
-	isDead = false
-end
+-- MAIN LOOP
+task.spawn(function()
+    while true do
+        task.wait()
 
-local function Set(state)
-	if isDead or not ScriptRunning then return end
-	if state then
-		isInvisible = true
-		anim:Play()
-		hum.HipHeight = invisSettings.HipHeight
-	else
-		isInvisible = false
-		anim:Stop()
-		hum.HipHeight = defaultSettings.HipHeight
-	end
-end
+        if enabled and not running then
+            running = true
 
-plr.CharacterAdded:Connect(function(ch)
-	reset(ch)
+            while enabled do
+                local coin = getClosestCoin()
+                if not coin then
+                    warn(&#34;No more Radioactive Coins&#34;)
+                    enabled = false
+                    break
+                end
+
+                local hrp = getHRP()
+                local part = coin.PrimaryPart
+
+                if hrp and part then
+                    -- ABOVE coin
+                    hrp.CFrame = part.CFrame + Vector3.new(0, 5, 0)
+                    task.wait()
+
+                    -- THROUGH coin (touch guaranteed)
+                    hrp.CFrame = part.CFrame
+                    task.wait()
+
+                    -- BELOW coin (extra safety)
+                    hrp.CFrame = part.CFrame - Vector3.new(0, 2, 0)
+                end
+            end
+
+            running = false
+        end
+    end
 end)
 
-wait()
+-- ================= GUI =================
 
-if plr.Character then
-	reset(plr.Character)
-else	
-	plr.CharacterAdded:Wait()
-	reset(plr.Character)
-end
+local gui = Instance.new(&#34;ScreenGui&#34;)
+gui.Name = &#34;RadioCoinGUI&#34;
+gui.Parent = player:WaitForChild(&#34;PlayerGui&#34;)
+gui.ResetOnSpawn = false
 
-hum.HealthChanged:Connect(function(h)
-	if h <= 1 and not isDead and ScriptRunning then
-		Set(false)
-		isDead = true
-		char:SetPrimaryPartCFrame(CFrame.new(0,workspace.FallenPartsDestroyHeight/1.05,0))
-	end
+local button = Instance.new(&#34;TextButton&#34;)
+button.Size = UDim2.fromScale(0.2, 0.08)
+button.Position = UDim2.fromScale(0.02, 0.4)
+button.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+button.TextColor3 = Color3.new(1, 1, 1)
+button.TextScaled = true
+button.Text = &#34;Radio Coin: OFF&#34;
+button.Parent = gui
+
+-- DRAGGABLE
+button.Active = true
+button.Draggable = true
+
+-- TOGGLE
+button.MouseButton1Click:Connect(function()
+    enabled = not enabled
+    button.Text = enabled and &#34;Radio Coin: ON&#34; or &#34;Radio Coin: OFF&#34;
 end)
-
-uis.InputBegan:Connect(function(input, isChat)
-	if isChat or isDead or not ScriptRunning then return end
-	if input.KeyCode == Enum.KeyCode.V then
-		Set(not isInvisible)
-	elseif uis:IsKeyDown(Enum.KeyCode.C) then
-		repeat
-			wait()
-			Set(true)
-		until
-		uis:IsKeyDown(Enum.KeyCode.C) ~= true
-		
-		Set(false)
-	elseif uis:IsKeyDown(Enum.KeyCode.F1) then
-        Set(false)
-		ScriptRunning = false
-		byemsg()
-	end
-end)
-
-startmsg()
-
-if mobile then 
-    task.spawn(function() -- mobile button
-        loadstring(game:HttpGet("https://pastebin.com/raw/uqAfqEJH"))()("V")
-    end)
-end
