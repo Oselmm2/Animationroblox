@@ -1,18 +1,14 @@
--- SERVICES
 local Players = game:GetService(&#34;Players&#34;)
 local player = Players.LocalPlayer
 
--- STATE
 local enabled = false
 local running = false
 
--- CHARACTER
 local function getHRP()
     return player.Character
         and player.Character:WaitForChild(&#34;HumanoidRootPart&#34;)
 end
 
--- FIND CLOSEST COIN
 local function getClosestCoin()
     local hrp = getHRP()
     if not hrp then return end
@@ -35,7 +31,6 @@ local function getClosestCoin()
     return closest
 end
 
--- MAIN LOOP
 task.spawn(function()
     while true do
         task.wait()
@@ -55,15 +50,13 @@ task.spawn(function()
                 local part = coin.PrimaryPart
 
                 if hrp and part then
-                    -- ABOVE coin
+                
                     hrp.CFrame = part.CFrame + Vector3.new(0, 5, 0)
                     task.wait()
 
-                    -- THROUGH coin (touch guaranteed)
                     hrp.CFrame = part.CFrame
                     task.wait()
 
-                    -- BELOW coin (extra safety)
                     hrp.CFrame = part.CFrame - Vector3.new(0, 2, 0)
                 end
             end
@@ -73,7 +66,6 @@ task.spawn(function()
     end
 end)
 
--- ================= GUI =================
 
 local gui = Instance.new(&#34;ScreenGui&#34;)
 gui.Name = &#34;RadioCoinGUI&#34;
@@ -89,7 +81,6 @@ button.TextScaled = true
 button.Text = &#34;Radio Coin: OFF&#34;
 button.Parent = gui
 
--- DRAGGABLE
 button.Active = true
 button.Draggable = true
 
